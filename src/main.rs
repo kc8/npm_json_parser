@@ -1,5 +1,5 @@
 use serde_json::Value;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use std::fs;
 use std::process;
 
@@ -41,9 +41,9 @@ fn main() {
     let mut test_first: String = String::from("");
     let mut script_names: HashSet<String> = HashSet::new();
 
+    // TODO and NOTE we are stripping the quote here out of the json
+    // TODO we could improve our functionality by find alternativess to pre-cleaning the data
     for x in scripts.iter_mut() {
-        //println!("{}, {}", x.0, x.1);
-        // TODO and NOTE we are stripping the quote here out of the json
         script_names.insert(x.0.replace('\"', ""));
         test_first += match x.1.as_str() {
             Some(s) => s,
@@ -56,9 +56,35 @@ fn main() {
         test_first += " ";
     }
 
-    let clean_input = test_first.replace('\"', "");
+    let mut transformed_input: HashMap<String, String> = HashMap::new();
+    for x in scripts.iter_mut() {
+        let key = script_names.insert(x.0.replace('\"', ""));
+        let val =  match x.1.as_str() {
+            Some(s) => s,
+            None => {
+                eprint!("[ERROR]: Could not properly parse {}, check that the \"scripts\" JSON syntax is properly formatted", &config.file_path);
+                process::exit(1);
+            }
+        };
+        transformed_input.insert(key.to_string(), val.to_string());
+    }
 
-    let mut parser = parsing::parser::Parser::new(&clean_input);
+    /*let transformed = transformed_input.iter_mut();
+    let mut new_parser = match parsing::parser::Parser::build_parser(transformed) {
+            Ok(s) => s,
+            Err(e) => {
+                eprint!("[ERROR]: Could not properly parse {}, check that the \"scripts\" JSON syntax is properly formatted due to invalud {}", &config.file_path, e);
+                process::exit(1);
+            }
+    };
+
+    let mut parser = match parsing::parser::Parser::new(&test_first) {
+            Ok(s) => s,
+            Err(e) => {
+                eprint!("[ERROR]: Could not properly parse {}, check that the \"scripts\" JSON syntax is properly formatted due to invalud {}", &config.file_path, e);
+                process::exit(1);
+            }
+    };
 
     while parser.current().token_type != parsing::tokens::END {
         match parser.current().token_type == parsing::tokens::NPM
@@ -89,7 +115,7 @@ fn main() {
         }
         parser.next();
     }
-    eprint!("[SUCCESS]: All npm run scripts are okay");
+    eprint!("[SUCCESS]: All npm run scripts are okay");*/
 }
 
 fn display_error_and_exit(msg: &str) {
