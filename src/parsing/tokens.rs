@@ -19,3 +19,9 @@ pub fn new_token<'token>(token_type: TokenType<'token>, literal: &'token str) ->
     }
 }
 
+pub fn generate_token(token_type: TokenType, literal: String) -> Token {
+    Token {
+        token_type,
+        token_literal: &literal,
+    }
+}
